@@ -1,0 +1,11 @@
+<!-- TueFind extension template -->
+<!-- About -->
+<li class="dropdown">
+    <a class="dropdown-toggle" data-toggle="dropdown"  href="#" role="button" aria-haspopup="true" aria-expanded="false">
+        <i class="fa fa-info-circle"> </i>
+        <?=$this->transEsc('About');?> <span class="caret"></span>
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+        <li><a class="dropdown-item" href="<?=$this->url('content-page', ['page' => 'about_ocb']) ?>"><?=$this->transEsc('about_ocb')?></a></li>
+    </ul>
+</li>
