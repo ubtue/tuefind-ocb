@@ -147,6 +147,7 @@
     <field name="has_publisher_fulltext" type="boolean" indexed="true" stored="true" multiValued="false"/>
     <field name="fulltext_types" type="string" indexed="true" stored="true" multiValued="true"/>
     <field name="keibi_internal" type="textFacet" indexed="true" stored="true" multiValued="true"/>
+    <field name="keibi_volume" type="long" indexed="true" stored="true" multiValued="false" docValues="true"/>
 
     <!-- COMMON copyFields-->
     <xi:include href="schema_tuefind_fields.xml" xmlns:xi="http://www.w3.org/2001/XInclude" parse="xml" xpointer="xpointer(//copyField)"/>

@@ -355,7 +355,7 @@ class TueFind extends \Laminas\View\Helper\AbstractHelper
             case 'krimdok':
                return 'KRI';
             case 'keibi':
-                return 'KEI';
+               return 'KEI';
         }
         throw new \Exception('can\'t determine TueFind subsystem type for "' . $instance . '"!');
     }
