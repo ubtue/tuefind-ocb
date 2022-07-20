@@ -143,9 +143,7 @@
     <field name="zdb_number" type="string" indexed="true" stored="true" multiValued="false"/>
     <field name="exclude_ixtheo" type="boolean" indexed="true" stored="true" multiValued="false"/>
     <field name="bundle_id" type="string" indexed="true" stored="true" multiValued="true"/>
-    <field name="has_fulltext" type="boolean" indexed="true" stored="true" multiValued="false"/>
     <field name="has_publisher_fulltext" type="boolean" indexed="true" stored="true" multiValued="false"/>
-    <field name="fulltext_types" type="string" indexed="true" stored="true" multiValued="true"/>
     <field name="keibi_internal" type="textFacet" indexed="true" stored="true" multiValued="true"/>
     <field name="keibi_volume" type="long" indexed="true" stored="true" multiValued="false" docValues="true"/>
 
