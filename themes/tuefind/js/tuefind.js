@@ -8,7 +8,7 @@ var TueFind = {
 
         $('a').each(function() {
             let href = $(this).attr('href');
-            if (href != undefined && !href.includes('#')) {
+            if (href != undefined && !href.includes('#') && $(".not-anchor").length == 0) {
                 if (href.match(/\/Content\//) || href.match(/\?subpage=/)) {
                     if (href.match(/[?&]lng=/)) {
                         // when switching the language, we want to keep the current anchor
@@ -90,6 +90,10 @@ var TueFind = {
         return '<div id="snippets_' + doc_id + '">' +  VuFind.translate('No Matches') + '</div>';
     },
 
+    GetProxyErrorMessage(doc_id) {
+        return '<div id="snippets_' + doc_id + '" class="alert alert-danger">' +  VuFind.translate('Proxy Error') + '</div>';
+    },
+
     GetFulltextSnippets: function(url, doc_id, query, verbose = false, synonyms = "", fulltext_types = "") {
         var valid_synonym_terms = new RegExp('lang|all');
         synonyms = synonyms.match(valid_synonym_terms) ? synonyms : false;
@@ -101,6 +105,15 @@ var TueFind = {
             dataType: "json",
             success: function (json) {
                 $(document).ready(function () {
+                    if (json.status === 'PROXY_ERROR') {
+                        if (verbose) {
+                             $("#snippets_" + doc_id).replaceWith(TueFind.GetProxyErrorMessage(doc_id));
+                        }
+                        $("#snippet_place_holder_" + doc_id).each(function () {
+                                $(this).replaceWith(TueFind.GetProxyErrorMessage(doc_id));
+                        });
+                        return;
+                    }
                     var snippets = json['snippets'];
                     $("#snippet_place_holder_" + doc_id).each(function () {
                         if (snippets)
@@ -240,10 +253,34 @@ var TueFind = {
                                 html += '</ul><ul class="list-group">';
                             }
                             previousSortPriority = reference.sortPriority;
-                            html += '<li class="list-group-item"><a href="' + reference.url + '" title="' + TueFind.EscapeHTML(reference.description) + '" target="_blank" property="sameAs">' + TueFind.EscapeHTML(reference.label) + '</a></li>';
+                            html += '<li class="list-group-item tf-beacon-reference"><a class="tf-beacon-reference-link" href="' + reference.url + '" title="' + TueFind.EscapeHTML(reference.description) + '" target="_blank" property="sameAs">' + TueFind.EscapeHTML(reference.label) + '</a></li>';
                         });
                         html += '</ul>';
                         $(container).append(html);
+
+                        // check if urls are valid (only if special URL parameter is set)
+                        // Note that CORS needs to be disabled in your browser for this to work.
+                        // See also:
+                        // - https://github.com/ubtue/tuefind/issues/1924
+                        // - https://medium.com/swlh/avoiding-cors-errors-on-localhost-in-2020-5a656ed8cefa
+                        const urlParams = new URLSearchParams(window.location.search);
+                        if (urlParams.get('checkUrls') == 'true') {
+                            $('.tf-beacon-reference').each(function() {
+                                $(this).css('backgroundColor', 'yellow');
+                                var urlToCheck = $(this).children('.tf-beacon-reference-link').attr('href');
+                                var targetBackground = $(this);
+                                $.ajax({
+                                    type: 'GET',
+                                    url: urlToCheck,
+                                    complete: function(jqXHR, textStatus) {
+                                        let color = 'red';
+                                        if (textStatus == 'success')
+                                            color = 'green';
+                                        targetBackground.css('backgroundColor', color);
+                                    }
+                                });
+                            });
+                        }
                     }
                 }
             });
@@ -388,6 +425,8 @@ var TueFind = {
         }, 'fast');
         let searchForm_fulltext = $('#searchForm_fulltext');
         searchForm_fulltext.val(fulltextquery);
+        let searchForm_fulltext_scope = $('#itemFTSearchScope');
+        searchForm_fulltext_scope.val(fulltextscope);
     },
 
     WildcardHandler : function(query_text) {
@@ -453,6 +492,34 @@ var TueFind = {
 	  console.log('tf-loaded-custom');
 	}
       });
+    },
+
+    SwitchRSSFeedData: function(element) {
+        let actionType = 'add';
+        if(!element.is(':checked')) {
+            actionType = 'remove';
+        }
+        if(element.val() == 'unsubscribe_email'){
+            actionType = 'subscribe_email';
+            element.val('subscribe_email');
+            $('.rssEmailTimestampBlock').removeClass('tf-d-none');
+            let today = new Date();
+            let curDate = today.getFullYear()+'-'+(today.getMonth()+1)+'-'+today.getDate();
+            let curTime = today.toLocaleTimeString();
+            let curTimestamp = curDate+" "+curTime;
+            $('.rssEmailTimestampBlock span').text(curTimestamp);
+        }else if(element.val() == 'subscribe_email'){
+            actionType = 'unsubscribe_email';
+            element.val('unsubscribe_email');
+            $('.rssEmailTimestampBlock').addClass('tf-d-none');
+        }
+        let rssID = element.data('id');
+        $.ajax({
+            type: "POST",
+            url: "/MyResearch/RssFeedSettings",
+            data: {action:actionType,id:rssID},
+            dataType: "json"
+        });
     }
 };
 
@@ -485,5 +552,9 @@ $(document).ready(function () {
     TueFind.AddContentAnchors();
     TueFind.AdjustSearchHandlers();
     setInterval(TueFind.ShowMoreButtonFavoriteList, 1000);
+
+    $('.rssLabel').change(function(){
+        TueFind.SwitchRSSFeedData($(this));
+    })
 
 });

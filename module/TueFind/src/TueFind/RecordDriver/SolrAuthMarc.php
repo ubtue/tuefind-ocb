@@ -4,79 +4,60 @@ namespace TueFind\RecordDriver;
 
 class SolrAuthMarc extends SolrAuthDefault {
 
+    protected $marcReaderClass = \TueFind\Marc\MarcReader::class;
+
     const EXTERNAL_REFERENCES_DATABASES = ['GND' , 'ISNI', 'LOC', 'ORCID', 'VIAF', 'Wikidata', 'Wikipedia'];
 
     /**
-     * Our metadata is in german, but VuFind requires english keys for translation.
-     * Since we do not have many of these cases, we map them by hand.
-     */
-    const LABEL_TRANSLATION_MAP = [
-        // Places
-        'Geburtsort'    => 'Place of birth',
-        'Sterbeort'     => 'Place of death',
-        'Wirkungsort'   => 'Place of activity',
-
-        // Personal Relations
-        'Ehemann'       => 'Husband',
-        'Ehefrau'       => 'Wife',
-
-        'Sohn'          => 'Son',
-        'Tochter'       => 'Daughter',
-
-        'Vater'         => 'Father',
-        'Mutter'        => 'Mother',
-        'Großvater'     => 'Grandfather',
-        'Großmutter'    => 'Grandmother',
-
-        'Bruder'        => 'Brother',
-        'Schwester'     => 'Sister',
-
-        'Schwager'      => 'Brother-in-law',
-        'Schwägerin'    => 'Sister-in-law',
-
-        'Cousin'        => 'Cousin',
-        'Cousine'       => 'Cousin',
-    ];
-
-    /**
      * Get List of all beacon references.
+     *
+     * @param mixed typeFlag    null: all, true: literaryRemains only, false: non-literary-remains only
+     *
      * @return [['title', 'url']]
      */
-    public function getBeaconReferences(): array
+    public function getBeaconReferences($type=null): array
     {
-        $beacon_references = [];
-        $beacon_fields = $this->getMarcRecord()->getFields('BEA');
-        if (is_array($beacon_fields)) {
-            foreach($beacon_fields as $beacon_field) {
-                $name_subfield  = $beacon_field->getSubfield('a');
-                $url_subfield   = $beacon_field->getSubfield('u');
+        $beaconReferences = [];
+        $beaconFields = $this->getMarcReader()->getFields('BEA');
+        if (is_array($beaconFields)) {
+            foreach($beaconFields as $beaconField) {
+                if ($type !== null) {
+                    $typeSubfield = $this->getMarcReader()->getSubfield($beaconField, '0');
+                    if ($type === true && ($typeSubfield == false || $typeSubfield != 'lr'))
+                        continue;
+                    elseif ($type === false && ($typeSubfield != false && $typeSubfield == 'lr'))
+                        continue;
+                }
 
-                if ($name_subfield !== false && $url_subfield !== false)
-                    $beacon_references[] = ['title' => $name_subfield->getData(),
-                                            'url' => $url_subfield->getData()];
+                $nameSubfield = $this->getMarcReader()->getSubfield($beaconField, 'a');
+                $urlSubfield = $this->getMarcReader()->getSubfield($beaconField, 'u');
+
+                if ($nameSubfield !== false && $urlSubfield !== false)
+                    $beaconReferences[] = ['title' => $nameSubfield,
+                                            'url' => $urlSubfield];
             }
         }
-        return $beacon_references;
+        return $beaconReferences;
     }
 
     protected function getExternalReferencesFiltered(array $blacklist=[], array $whitelist=[]): array
     {
         $references = [];
 
-        $fields = $this->getMarcRecord()->getFields('670');
+        $fields = $this->getMarcReader()->getFields('670');
         if (is_array($fields)) {
             foreach ($fields as $field) {
-                $nameSubfield = $field->getSubfield('a');
+                $nameSubfield = $this->getMarcReader()->getSubfield($field, 'a');
                 if ($nameSubfield === false)
                     continue;
 
-                $name = $nameSubfield->getData();
-                if (in_array($name, $blacklist) || (count($whitelist) > 0 && !in_array($nameSubfield->getData(), $whitelist)))
+                $name = $nameSubfield;
+                if (in_array($name, $blacklist) || (count($whitelist) > 0 && !in_array($nameSubfield, $whitelist)))
                     continue;
 
-                $urlSubfield = $field->getSubfield('u');
+                $urlSubfield = $this->getMarcReader()->getSubfield($field, 'u');
                 if ($urlSubfield !== false) {
-                    $url = $urlSubfield->getData();
+                    $url = $urlSubfield;
                     if ($name == 'Wikipedia')
                         $url = preg_replace('"&(oldid|diff)=[^&]+"', '', $url);
 
@@ -89,51 +70,53 @@ class SolrAuthMarc extends SolrAuthDefault {
         return $references;
     }
 
-    public function getBibliographicalReferences(): array
+    public function getBiographicalReferences(): array
     {
         $references = [];
 
         $gndNumber = $this->getGNDNumber();
         if ($gndNumber != null)
-            $references[] = ['title' => 'GND',
+            $references[] = ['title' => 'GND' .  ' (' . $gndNumber . ')',
                              'url' => 'http://d-nb.info/gnd/' . urlencode($gndNumber)];
 
         $isnis = $this->getISNIs();
         foreach ($isnis as $isni) {
-            $references[] = ['title' => 'ISNI',
+            $references[] = ['title' => 'ISNI' .  ' (' . $isni . ')',
                              'url' => 'https://isni.org/isni/' . urlencode(str_replace(' ', '', $isni))];
         }
 
         $lccn = $this->getLCCN();
         if ($lccn != null)
-            $references[] = ['title' => 'LOC',
+            $references[] = ['title' => 'LOC' .  ' (' . $lccn . ')',
                              'url' => 'https://lccn.loc.gov/' . urlencode($lccn)];
 
         $orcids = $this->getORCIDs();
         foreach ($orcids as $orcid) {
-            $references[] = ['title' => 'ORCID',
+            $references[] = ['title' => 'ORCID' .  ' (' . $orcid . ')',
                              'url' => 'https://orcid.org/' . urlencode($orcid)];
         }
 
         $viafs = $this->getVIAFs();
         foreach ($viafs as $viaf) {
-            $references[] = ['title' => 'VIAF',
+            $references[] = ['title' => 'VIAF' .  ' (' . $viaf . ')',
                              'url' => 'https://viaf.org/viaf/' . urlencode($viaf)];
         }
 
-        $wikidataId = $this->getWikidataId();
-        if ($wikidataId != null)
-            $references[] = ['title' => 'Wikidata',
+        $wikidataIds = $this->getWikidataIds();
+        foreach ($wikidataIds as $wikidataId) {
+            $references[] = ['title' => 'Wikidata' .  ' (' . $wikidataId . ')',
                              'url' => 'https:////www.wikidata.org/wiki/' . urlencode($wikidataId)];
+        }
 
         $references = array_merge($references, $this->getExternalReferencesFiltered(/*blacklist=*/[], /*whitelist=*/['Wikipedia']));
+        $references = array_merge($references, $this->getBeaconReferences(/* type flag, false => only non literary-remains */ false));
         return $references;
     }
 
     public function getArchivedMaterial(): array
     {
         $references = $this->getExternalReferencesFiltered(/*blacklist=*/[], /*whitelist=*/['Archivportal-D', 'Kalliope']);
-        $references = array_merge($references, $this->getBeaconReferences());
+        $references = array_merge($references, $this->getBeaconReferences(/* type flag, true => only literary remains */ true));
         return $references;
     }
 
@@ -147,11 +130,12 @@ class SolrAuthMarc extends SolrAuthDefault {
     {
         $lifeDates = ['birth' => null, 'death' => null];
 
-        $fields = $this->getMarcRecord()->getFields('548');
+        $fields = $this->getMarcReader()->getFields('548');
         foreach ($fields as $field) {
-            $typeSubfield = $field->getSubfield('4');
-            if ($typeSubfield !== false && $typeSubfield->getData() == 'datx') {
-                if (preg_match('"^(\d{1,2}\.\d{1,2}\.\d{1,4})-(\d{1,2}\.\d{1,2}\.\d{1,4})$"', $field->getSubfield('a')->getData(), $hits)) {
+            $typeSubfield = $this->getMarcReader()->getSubfield($field,'4');
+
+            if ($typeSubfield !== false && $typeSubfield == 'datx') {
+                if (preg_match('"^(\d{1,2}\.\d{1,2}\.\d{1,4})-(\d{1,2}\.\d{1,2}\.\d{1,4})$"', $this->getMarcReader()->getSubfield($field,'a'), $hits)) {
                     $lifeDates['birth'] = $hits[1];
                     $lifeDates['death'] = $hits[2];
                     break;
@@ -166,16 +150,16 @@ class SolrAuthMarc extends SolrAuthDefault {
     {
         $lifePlaces = ['birth' => null, 'death' => null];
 
-        $fields = $this->getMarcRecord()->getFields('551');
+        $fields = $this->getMarcReader()->getFields('551');
         foreach ($fields as $field) {
-            $typeSubfield = $field->getSubfield('4');
+            $typeSubfield = $this->getMarcReader()->getSubfield($field,'4');
             if ($typeSubfield !== false) {
-                switch($typeSubfield->getData()) {
+                switch($typeSubfield) {
                 case 'ortg':
-                    $lifePlaces['birth'] = $field->getSubfield('a')->getData() ?? null;
+                    $lifePlaces['birth'] = $this->getMarcReader()->getSubfield($field,'a') ?? null;
                     break;
                 case 'orts':
-                    $lifePlaces['death'] = $field->getSubfield('a')->getData() ?? null;
+                    $lifePlaces['death'] = $this->getMarcReader()->getSubfield($field,'a') ?? null;
                     break;
                 }
 
@@ -275,16 +259,16 @@ class SolrAuthMarc extends SolrAuthDefault {
     public function getGeographicalRelations()
     {
         $locations = [];
-        $fields = $this->getMarcRecord()->getFields('551');
+        $fields = $this->getMarcReader()->getFields('551');
         foreach ($fields as $field) {
-            $locations[] = ['name' => $field->getSubfield('a')->getData(),
-                            'type' => $this->translateLabel($field->getSubfield('i')->getData())];
+            $locations[] = ['name' => $this->getMarcReader()->getSubfield($field, 'a'),
+                            'type' => $this->getMarcReader()->getSubfield($field, 'i')];
         }
 
-        $fields = $this->getMarcRecord()->getFields('043');
+        $fields = $this->getMarcReader()->getFields('043');
         foreach ($fields as $field) {
-            foreach ($field->getSubfields('c') as $subfield) {
-                $locations[] = ['name' => $subfield->getData(),
+            foreach ($this->getMarcReader()->getSubfields($field,'c') as $subfield) {
+                $locations[] = ['name' => $subfield,
                                 'type' => 'DIN-ISO-3166'];
             }
         }
@@ -293,21 +277,21 @@ class SolrAuthMarc extends SolrAuthDefault {
 
     public function getMeetingName()
     {
-        foreach ($this->getMarcRecord()->getFields('111') as $field) {
-            $name = $field->getSubfield('a')->getData();
+        foreach ($this->getMarcReader()->getFields('111') as $field) {
+            $name = $this->getMarcReader()->getSubfield($field,'a');
 
-            $subfield_c = $field->getSubfield('c');
-            $subfield_d = $field->getSubfield('d');
-            $subfield_g = $field->getSubfield('g');
+            $subfield_c = $this->getMarcReader()->getSubfield($field,'c');
+            $subfield_d = $this->getMarcReader()->getSubfield($field,'d');
+            $subfield_g = $this->getMarcReader()->getSubfield($field,'g');
 
             if ($subfield_c != false || $subfield_g != false)
                 $name .= '.';
             if ($subfield_g != false)
-                $name .= ' ' . $subfield_g->getData();
+                $name .= ' ' . $subfield_g;
             if ($subfield_c != false)
-                $name .= ' ' . $subfield_c->getData();
+                $name .= ' ' . $subfield_c;
             if ($subfield_d != false)
-                $name .= ' (' . $subfield_d->getData() . ')';
+                $name .= ' (' . $subfield_d . ')';
 
             return $name;
         }
@@ -321,16 +305,16 @@ class SolrAuthMarc extends SolrAuthDefault {
      */
     public function getName()
     {
-        foreach ($this->getMarcRecord()->getFields('100') as $field) {
-            $aSubfield = $field->getSubfield('a');
+        foreach ($this->getMarcReader()->getFields('100') as $field) {
+            $aSubfield = $this->getMarcReader()->getSubfield($field,'a');
             if ($aSubfield == false)
                 continue;
 
-            $name = $aSubfield->getData();
+            $name = $aSubfield;
 
-            $bSubfield = $field->getSubfield('b');
+            $bSubfield = $this->getMarcReader()->getSubfield($field,'b');
             if ($bSubfield != false)
-                $name .= ' ' . $bSubfield->getData();
+                $name .= ' ' . $bSubfield;
             return $name;
         }
 
@@ -359,12 +343,26 @@ class SolrAuthMarc extends SolrAuthDefault {
     public function getNameVariants(): array
     {
         $nameVariants = [];
-        $fields = $this->getMarcRecord()->getFields('400|410|411', true);
+        $fields = $this->getMarcReader()->getFieldsDelimiter('400|410|411');
         if (is_array($fields)) {
             foreach ($fields as $field) {
-                $nameSubfield = $field->getSubfield('a');
-                if ($nameSubfield !== false)
-                    $nameVariants[] = $nameSubfield->getData();
+                if (is_array($field)) {
+                    foreach ($field as $oneField) {
+                        $nameSubfield = $this->getMarcReader()->getSubfield($oneField,'a');
+                        if (!empty($nameSubfield)) {
+                            $name = $nameSubfield;
+                            $numberSubfield = $this->getMarcReader()->getSubfield($oneField,'b');
+                            if (!empty($numberSubfield)) {
+                                $name .= ' ' . $numberSubfield;
+                            }
+                            $titleSubfield = $this->getMarcReader()->getSubfield($oneField,'c');
+                            if (!empty($titleSubfield)) {
+                                $name .= ' ' . $titleSubfield;
+                            }
+                            $nameVariants[] = $name;
+                        }
+                    }
+                }
             }
         }
 
@@ -372,27 +370,79 @@ class SolrAuthMarc extends SolrAuthDefault {
         return $nameVariants;
     }
 
+    public function getOccupationsAndTimespans(): array
+    {
+        $occupations = [];
+
+        $fields = $this->getMarcReader()->getFields('374');
+        if (is_array($fields)) {
+            foreach ($fields as $field) {
+                $nameSubfield = $this->getMarcReader()->getSubfield($field, 'a');
+                if (!empty($nameSubfield))
+                    $occupations[] = ['name' => $nameSubfield];
+            }
+        }
+
+        $fields = $this->getMarcReader()->getFields('550');
+        if (is_array($fields)) {
+            foreach ($fields as $field) {
+                $typeSubfield = $this->getMarcReader()->getSubfield($field, '4');
+                if (empty($typeSubfield) || !in_array($typeSubfield, ['berc', 'beru']))
+                    continue;
+
+                $occupations[] = [
+                    'name' => $this->getMarcReader()->getSubfield($field, 'a'),
+                    'timespan' => preg_replace('"^Z:"', '', $this->getMarcReader()->getSubfield($field, '9')),
+                ];
+            }
+        }
+
+        return $occupations;
+    }
+
     public function getPersonalRelations(): array
     {
         $relations = [];
 
-        $fields = $this->getMarcRecord()->getFields('500');
+        $fields = $this->getMarcReader()->getFields('500');
+
         if (is_array($fields)) {
             foreach ($fields as $field) {
-                $nameSubfield = $field->getSubfield('a');
 
-                if ($nameSubfield !== false) {
-                    $relation = ['name' => $nameSubfield->getData()];
+                $aSubfield = $this->getMarcReader()->getSubfield($field, 'a');
+                if ($aSubfield !== false) {
+
+                    $relationName = $aSubfield;
+
+                    $bSubfield = $this->getMarcReader()->getSubfield($field, 'b');
+                    if ($bSubfield !== false) {
+                        $relationName .= " " . $bSubfield;
+                    }
+
+                    $cSubfield = $this->getMarcReader()->getSubfield($field, 'c');
+                    if ($cSubfield !== false) {
+                        $relationName .= ", " . $cSubfield;
+                    }
+
+                    $relation = ['name' => $relationName];
 
                     $idPrefixPattern = '/^\(DE-627\)/';
-                    $idSubfield = $field->getSubfield('0', $idPrefixPattern);
-                    if ($idSubfield !== false)
-                        $relation['id'] = preg_replace($idPrefixPattern, '', $idSubfield->getData());
+                    $idSubfield = $this->getMarcReader()->getSubfield($field, '0', $idPrefixPattern);
+                    if ($idSubfield !== false) {
+                        $relation['id'] = preg_replace($idPrefixPattern, '', $idSubfield);
+                    }
+                    $typeSubfield = $this->getMarcReader()->getSubfield($field, '9');
 
-                    $typeSubfield = $field->getSubfield('9');
-                    if ($typeSubfield !== false)
-                        $relation['type'] = $this->translateLabel(preg_replace('/^v:/', '', $typeSubfield->getData()));
-
+                    if ($typeSubfield !== false) {
+                        $relationType = preg_replace('/^v:/', '', $typeSubfield);
+                        if(empty($relationType)) {
+                            $dSubfield = $this->getMarcReader()->getSubfield($field, 'd');
+                            if ($dSubfield !== false) {
+                                $relationType .= $dSubfield;
+                            }
+                        }
+                        $relation['type'] = $relationType;
+                    }
                     $relations[] = $relation;
                 }
             }
@@ -424,29 +474,36 @@ class SolrAuthMarc extends SolrAuthDefault {
     {
         $relations = [];
 
-        $fields = $this->getMarcRecord()->getFields('510');
+        $fields = $this->getMarcReader()->getFields('510');
         if (is_array($fields)) {
             foreach ($fields as $field) {
-                $nameSubfield = $field->getSubfield('a');
+                $nameSubfield = $this->getMarcReader()->getSubfield($field, 'a');
                 if ($nameSubfield !== false) {
-                    $relation = ['name' => $nameSubfield->getData()];
 
-                    $addSubfield = $field->getSubfield('b');
-                    if ($addSubfield !== false)
-                        $relation['institution'] = $addSubfield->getData();
+                    $relationName = $nameSubfield;
+                    $addSubfields = $this->getMarcReader()->getSubfields($field, 'b');
 
-                    $locationSubfield = $field->getSubfield('g');
+                    $adds = [];
+                    foreach ($addSubfields as $addSubfield) {
+                        $adds[] = $addSubfield;
+                        if (!isset($relation['institution']))
+                            $relation['institution'] = $addSubfield;
+                    }
+                    $relation = ['name' => $relationName,
+                                 'adds' => $adds];
+
+                    $locationSubfield = $this->getMarcReader()->getSubfield($field, 'g');
                     if ($locationSubfield !== false)
-                        $relation['location'] = $locationSubfield->getData();
+                        $relation['location'] = $locationSubfield;
 
                     $idPrefixPattern = '/^\(DE-627\)/';
-                    $idSubfield = $field->getSubfield('0', $idPrefixPattern);
+                    $idSubfield = $this->getMarcReader()->getSubfield($field, '0', $idPrefixPattern);
                     if ($idSubfield !== false)
-                        $relation['id'] = preg_replace($idPrefixPattern, '', $idSubfield->getData());
+                        $relation['id'] = preg_replace($idPrefixPattern, '', $idSubfield);
 
-                    $localSubfields = $field->getSubfields('9');
+                    $localSubfields = $this->getMarcReader()->getSubfields($field, '9');
                     foreach ($localSubfields as $localSubfield) {
-                        if (preg_match('"^(.):(.+)"', $localSubfield->getData(), $matches)) {
+                        if (preg_match('"^(.):(.+)"', $localSubfield, $matches)) {
                             if ($matches[1] == 'Z')
                                 $relation['timespan'] = $matches[2];
                             else if ($matches[1] == 'v')
@@ -465,12 +522,12 @@ class SolrAuthMarc extends SolrAuthDefault {
     public function getTimespans(): array
     {
         $timespans = [];
-        $fields = $this->getMarcRecord()->getFields('548');
+        $fields = $this->getMarcReader()->getFields('548');
         if (is_array($fields)) {
             foreach ($fields as $field) {
-                $subfield_a = $field->getSubfield('a');
+                $subfield_a = $this->getMarcReader()->getSubfield($field,'a');
                 if ($subfield_a !== false)
-                    $timespans[] = $subfield_a->getData();
+                    $timespans[] = $subfield_a;
             }
         }
         return $timespans;
@@ -485,11 +542,11 @@ class SolrAuthMarc extends SolrAuthDefault {
 
     public function isFamily(): bool
     {
-        $fields = $this->getMarcRecord()->getFields('079');
+        $fields = $this->getMarcReader()->getFields('079');
         if (is_array($fields)) {
             foreach ($fields as $field) {
-                $typeSubfield = $field->getSubfield('v');
-                if ($typeSubfield != false && $typeSubfield->getData() == 'pif')
+                $typeSubfield = $this->getMarcReader()->getSubfield($field,'v');
+                if ($typeSubfield != false && $typeSubfield == 'pif')
                     return true;
             }
         }
@@ -508,11 +565,11 @@ class SolrAuthMarc extends SolrAuthDefault {
      */
     public function isName(): bool
     {
-        $fields = $this->getMarcRecord()->getFields('079');
+        $fields = $this->getMarcReader()->getFields('079');
         if (is_array($fields)) {
             foreach ($fields as $field) {
-                $typeSubfield = $field->getSubfield('b');
-                if ($typeSubfield != false && $typeSubfield->getData() == 'n')
+                $typeSubfield = $this->getMarcReader()->getSubfield($field,'b');
+                if ($typeSubfield != false && $typeSubfield == 'n')
                     return true;
             }
         }
@@ -528,10 +585,5 @@ class SolrAuthMarc extends SolrAuthDefault {
     public function isPerson(): bool
     {
         return $this->getType() == 'person';
-    }
-
-    protected function translateLabel($label): string
-    {
-        return self::LABEL_TRANSLATION_MAP[$label] ?? $label;
     }
 }

@@ -319,22 +319,30 @@ class SolrDefault extends \TueFind\RecordDriver\SolrMarc
             $this->fields['prefix4_key_word_chain_bag'] : '';
     }
 
-    public function getTopics($language=null): array
+    public function getTopicsForCloud($language=null): array
     {
-        return array_unique($this->getKeyWordChainBag($language));
+        $key = 'topic_cloud';
+        if (isset($language))
+            $key .= '_' . $language;
+        return array_unique($this->fields[$key] ?? []);
     }
 
-    /**
-     * Check whether there are fulltexts associated with this record
-     * @return bool
-     */
-    public function hasFulltext()
-    {
-        return isset($this->fields['has_fulltext']) && $this->fields['has_fulltext'] == true;
-    }
 
     public function isAvailableForPDA()
     {
         return isset($this->fields['is_potentially_pda']) && $this->fields['is_potentially_pda'];
+    }
+
+
+    public function getIxTheoClassifications()
+    {
+        $result = array();
+        if(isset($this->fields['ixtheo_notation']) && is_array($this->fields['ixtheo_notation'])) {
+            $ixtheo_notation = $this->fields['ixtheo_notation'];
+            foreach($ixtheo_notation as $notation) {
+                $result[] = $notation;
+            }
+        }
+        return $result;
     }
 }

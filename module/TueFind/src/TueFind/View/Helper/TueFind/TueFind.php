@@ -121,7 +121,16 @@ class TueFind extends \Laminas\View\Helper\AbstractHelper
 
 
     public function getRouteParams() {
-        return $this->container->get('application')->getMvcEvent()->getRouteMatch()->getParams();
+        $defaultRouteParams = [
+            'controller' => null,
+            'action' => null
+        ];
+        $route_match = $this->container->get('application')->getMvcEvent()->getRouteMatch();
+        if ($route_match == null){
+            return $defaultRouteParams;
+        }else{
+            return $route_match->getParams();
+        }
     }
 
     /**
@@ -199,6 +208,20 @@ class TueFind extends \Laminas\View\Helper\AbstractHelper
         return $imgSrc;
     }
 
+     /**
+     * Search for specific icon in details table, return generic icon if not found
+     *
+     * @param string $detailsId
+     *
+     * @return string
+     */
+    public function getDetailsIcon($detailsId='details') {
+        if (str_contains($detailsId, "(")) {
+            $detailsId = trim(explode("(", $detailsId)[0]);
+        }
+        return $this->getView()->imageLink('details/' . $detailsId . '.png');
+    }
+
     /**
      * Filter unwanted stuff from RSS item description (especially images)
      *
@@ -257,7 +280,9 @@ class TueFind extends \Laminas\View\Helper\AbstractHelper
         $rssItemsToReturn = [];
         $i = 0;
         $processedFeeds = [];
+
         foreach ($rssItems as $rssItem) {
+
             if ($maxItemCount !== null && $i >= $maxItemCount)
                 break;
 
@@ -420,6 +445,11 @@ class TueFind extends \Laminas\View\Helper\AbstractHelper
         return ($user = $manager->isLoggedIn()) ? $user->lastname : "";
     }
 
+    public function isRssSubscriptionEnabled(): bool {
+        $setting = $this->getConfig()->General->rss_subscriptions ?? 'disabled';
+        return $setting == 'enabled';
+    }
+
     /**
      * Check if a searchbox tab is enabled, e.g. "SolrAuth".
      */
@@ -455,34 +485,78 @@ class TueFind extends \Laminas\View\Helper\AbstractHelper
 
     public function printPublicationInformation($pubPlaces, $pubDates, $pubNames) {
         if (is_array($pubPlaces) && is_array($pubDates) && is_array($pubNames) &&
-            !(empty($pubPlaces) && empty($pubDates) && empty($pubNames))) {
-             $total = min(count($pubPlaces), count($pubDates), count($pubNames));
-             // if we have pub dates but no other details, we still want to export the year:
-             if ($total == 0 && count($pubDates) > 0) {
-                 $total = 1;
-             }
-             $dateTimeHelper = $this->container->get('ViewHelperManager')->get('dateTime');
-             for ($i = 0; $i < $total; $i++) {
-                 if (isset($pubPlaces[$i])) {
-                     echo "CY  - " . rtrim(str_replace(array('[', ']'), '', $pubPlaces[$i]), ': '). "\r\n";
-                 }
-                 if (isset($pubNames[$i])) {
-                     echo "PB  - " . rtrim($pubNames[$i], ", ") . "\r\n";
-                 }
-                 $date = trim($pubDates[$i], '[]. ');
-                 if (strlen($date) > 4) {
-                     $date = $dateTimeHelper->extractYear($date);
-                 }
-                 if ($date) {
-                     echo 'PY  - ' . "$date\r\n";
-                 }
-             }
-             return true;
-         }
-         return false;
+            !(empty($pubPlaces) && empty($pubDates) && empty($pubNames)))
+        {
+            $total = min(count($pubPlaces), count($pubDates), count($pubNames));
+            // if we have pub dates but no other details, we still want to export the year:
+            if ($total == 0 && count($pubDates) > 0) {
+                $total = 1;
+            }
+            $dateTimeHelper = $this->container->get('ViewHelperManager')->get('dateTime');
+            for ($i = 0; $i < $total; $i++) {
+                if (isset($pubPlaces[$i])) {
+                    echo "CY  - " . rtrim(str_replace(array('[', ']'), '', $pubPlaces[$i]), ': '). "\r\n";
+                }
+                if (isset($pubNames[$i])) {
+                    echo "PB  - " . rtrim($pubNames[$i], ", ") . "\r\n";
+                }
+                $date = trim($pubDates[$i], '[]. ');
+                if (strlen($date) > 4) {
+                    $date = $dateTimeHelper->extractYear($date);
+                }
+                if ($date) {
+                    echo 'PY  - ' . "$date\r\n";
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     public function getKfL() {
         return $this->container->get(\TueFind\Service\KfL::class);
+    }
+
+    public function getPublicationByControlNumber(string $controlNumber) {
+        $publicationTable = $this->container->get(\VuFind\Db\Table\PluginManager::class)->get('publication');
+        return $publicationTable->getByControlNumber($controlNumber);
+    }
+
+    public function getUserAccessState($authorityId, $userId = null): array
+    {
+        $table = $this->container->get(\VuFind\Db\Table\PluginManager::class)->get('user_authority');
+        $row = $table->getByAuthorityId($authorityId);
+
+        $result = ['availability' => '', 'access_state' => ''];
+        if ($row == null) {
+            // Nobody got permission yet, feel free to take it
+            $result['availability'] = 'free';
+        } else {
+            $result['access_state'] = $row->access_state;
+            if (isset($userId) && ($userId == $row->user_id)) {
+                $result['availability'] = 'mine';
+            } else {
+                $result['availability'] = 'other';
+            }
+        }
+
+        return $result;
+    }
+
+    public function getUserAccessPublishRecord($userId, $recordAuthors): bool
+    {
+        $authorsIds = [];
+        foreach($recordAuthors as $authorArray) {
+            if(!empty($authorArray) && is_array($authorArray)) {
+                foreach($authorArray as $authors) {
+                    if(isset($authors['id'])) {
+                        $authorsIds[] = $authors['id'][0];
+                    }
+                }
+            }
+        }
+
+        $table = $this->container->get(\VuFind\Db\Table\PluginManager::class)->get('user_authority');
+        return $table->hasGrantedAuthorityRight($userId, $authorsIds);
     }
 }

@@ -71,10 +71,8 @@ $config = [
             'IxTheo\RecordDriver\PluginManager' => 'VuFind\ServiceManager\AbstractPluginManagerFactory',
             'IxTheo\Search\Options\PluginManager' => 'VuFind\ServiceManager\AbstractPluginManagerFactory',
             'IxTheo\Search\Params\PluginManager' => 'VuFind\ServiceManager\AbstractPluginManagerFactory',
-            'TueFind\Search\Params\PluginManager' => 'VuFind\ServiceManager\AbstractPluginManagerFactory',
             'IxTheo\Search\Results\PluginManager' => 'VuFind\ServiceManager\AbstractPluginManagerFactory',
             'IxTheo\RecordTab\PluginManager' => 'VuFind\ServiceManager\AbstractPluginManagerFactory',
-            'IxTheo\RecordTab\ItemFulltextSearch' => 'Laminas\ServiceManager\Factory\InvokableFactory',
         ],
         'aliases' => [
             'VuFind\AuthPluginManager' => 'IxTheo\Auth\PluginManager',
@@ -91,7 +89,6 @@ $config = [
             'VuFind\RecordDriver\PluginManager' => 'IxTheo\RecordDriver\PluginManager',
             'VuFind\Search\Options\PluginManager' => 'IxTheo\Search\Options\PluginManager',
             'VuFind\Search\Params\PluginManager' => 'IxTheo\Search\Params\PluginManager',
-            'VuFind\Search\Params\PluginManager' => 'TueFind\Search\Params\PluginManager',
             'VuFind\Search\Results\PluginManager' => 'IxTheo\Search\Results\PluginManager',
             'VuFind\RecordTab\PluginManager' => 'IxTheo\RecordTab\PluginManager',
         ],
@@ -103,6 +100,7 @@ $recordRoutes = [
     // for the nonTabRecordActions added in \IxTheo\Route\RouteGenerator
     'record' => 'Record',
     'search2record' => 'Search2Record',
+    'search3record' => 'Search3Record',
 ];
 $dynamicRoutes = [];
 $staticRoutes = [
