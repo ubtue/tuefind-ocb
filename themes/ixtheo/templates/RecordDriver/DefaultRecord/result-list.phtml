@@ -52,7 +52,7 @@
                   <?php $authorityId = $authorProperties['id'][0] ?? '';?>
                   <?php if ($authorityId && $authorityDriver = $this->authority()->recordExists($authorityId)): ?>
                     <a href="<?=$this->record($authorityDriver)->getLink('titles-by', $authorityDriver)?>"><i class="fa fa-book" aria-hidden="true" title="<?=$this->transEsc('author_all_titles_tooltip')?>"></i></a>
-                    <a href="<?=$this->record($this->driver)->getLink('authority', $authorityId)?>"><i class="fa fa-user-circle" aria-hidden="true" title="<?=$this->transEsc('author_details_tooltip')?>"></i></a>
+                    <a href="<?=$this->recordLinker()->getUrl($authorityDriver)?>"><i class="fa fa-user-circle" aria-hidden="true" title="<?=$this->transEsc('author_details_tooltip')?>"></i></a>
                   <?php else: ?>
                     <a href="<?=$this->record($this->driver)->getLink('author', $author)?>"><i class="fa fa-book" aria-hidden="true" title="<?=$this->transEsc('author_all_titles_tooltip')?>"></i></a>
                   <?php endif; ?>
@@ -92,7 +92,7 @@
                 <?php $journal_issue_display = preg_replace('/(\d+)(\()/','$1 $2', implode(", ", $journal_issue)) ?>
                 <a href="<?=$this->url('record', ['id' => $superior_ppn]) ?>"><?=$journal_issue_display ?></a>
               <?php else: ?>
-                <?php implode($journal_issue, " ") ?>
+                <?php implode(" ", $journal_issue) ?>
               <?php endif; ?>
             </div>
           <?php else: ?>
@@ -165,9 +165,15 @@
 
       <?php $urls_and_material_types = $this->driver->getURLsAndMaterialTypes(); ?>
       <?php if (!empty($urls_and_material_types)): ?>
+        <?php $material_types = array_values($urls_and_material_types); ?>
+        <?php $direct_oa_fulltext_present = !empty(preg_grep('/Volltext.*kostenfrei.*/', $material_types))?>
         <?php foreach ($urls_and_material_types as $url => $material_type): ?>
-	   <a href="<?=$url?>" class="fulltext" target="_blank"><i class="fa fa-external-link"></i> <?=$this->transEsc($material_type)?></a>
-           <br/>
+            <?php if ($direct_oa_fulltext_present && $material_type == 'Presumably Free Access'): ?>
+            <?php     continue; ?>
+            <?php else: ?>
+                      <a href="<?=$url?>" class="fulltext" target="_blank"><i class="fa fa-external-link"></i> <?=$this->transEsc($material_type)?></a>
+                      <br/>
+            <?php endif; ?>
         <?php endforeach; ?>
       <?php endif; ?>
       <?php $openUrl = $this->openUrl($this->driver, 'results');
@@ -187,7 +193,7 @@
 
       <?php $canonLawRangesStrings = $this->driver->tryMethod('getCanonLawRangesStrings');
         if (!empty($canonLawRangesStrings) && count($canonLawRangesStrings) > 0) {
-          echo '<div>' . implode(array_unique($canonLawRangesStrings), '; ') . '</div>';
+          echo '<div>' . implode('; ', array_unique($canonLawRangesStrings)) . '</div>';
         }
       ?>
 

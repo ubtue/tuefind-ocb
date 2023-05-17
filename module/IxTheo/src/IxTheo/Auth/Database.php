@@ -21,7 +21,7 @@ class Database extends \TueFind\Auth\Database
         $params = parent::collectParamsFromRequest($request);
 
         $additionalParams = [
-            'ixtheo_title' => '', 'ixtheo_institution' => '', 'ixtheo_country' => '',
+            'ixtheo_title' => '', 'ixtheo_country' => '',
             'ixtheo_language' => '', 'ixtheo_appellation' => ''
         ];
         foreach ($additionalParams as $param => $default) {

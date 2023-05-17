@@ -102,14 +102,22 @@ $config = [
             'redirect-license' => [
                 'type'    => 'Laminas\Router\Http\Segment',
                 'options' => [
-                    'route'    => '/redirect-license/:id',
+                    'route'    => '/redirect-license/:id[/:proxy-url]',
                     'constraints' => [
-                        'id'   => '[^/]+',
+                        // The ID can either be a regular PPN, or a HAN-ID.
+                        'id'        => '[^/]+',
+                        // The Proxy-URL is sent by the HAN Server
+                        // if there was a timeout on an existing session
+                        // and a user needs to re-authenticate before
+                        // being able to use the resource again.
+                        // The URL will contain detailed information about
+                        // e.g. the last viewed page in the document.
+                        'proxy-url' => '.+',
                     ],
                     'defaults' => [
                         'controller' => 'Redirect',
                         'action'     => 'license',
-                    ]
+                    ],
                 ],
             ],
             'myresearch-publish' => [
@@ -282,7 +290,8 @@ $config = [
             'TueFind\Search\Options\PluginManager' => 'VuFind\ServiceManager\AbstractPluginManagerFactory',
             'TueFind\Search\Params\PluginManager' => 'VuFind\ServiceManager\AbstractPluginManagerFactory',
             'TueFind\Search\Results\PluginManager' => 'VuFind\ServiceManager\AbstractPluginManagerFactory',
-            'TueFind\Service\DSpace' => 'TueFind\Service\DSpaceFactory',
+            'TueFind\Service\DSpace6' => 'TueFind\Service\DSpaceFactory',
+            'TueFind\Service\DSpace7' => 'TueFind\Service\DSpaceFactory',
             'TueFind\Service\KfL' => 'TueFind\Service\KfLFactory',
             'TueFindSearch\Service' => 'VuFind\Service\SearchServiceFactory',
             'Laminas\Session\SessionManager' => 'TueFind\Session\ManagerFactory',
@@ -345,8 +354,20 @@ $config = [
 
 $recordRoutes = [];
 $dynamicRoutes = [];
-$staticRoutes = ['AdminFrontend/ShowAdmins', 'AdminFrontend/ShowUserAuthorities', 'MyResearch/Newsletter', 'MyResearch/Publications', 'MyResearch/RssFeedSettings', 'MyResearch/RssFeedPreview', 'RssFeed/Full', 'Search3/Home', 'Search3/Results',  'Search3/FacetList', 'Search3/Versions'];
-
+$staticRoutes = [
+    'AdminFrontend/ShowAdmins',
+    'AdminFrontend/ShowUserAuthorities',
+    'AdminFrontend/ShowUserAuthorityHistory',
+    'AdminFrontend/ShowUserPublications',
+    'AdminFrontend/ShowUserPublicationStatistics',
+    'MyResearch/Publications',
+    'MyResearch/RssFeedSettings',
+    'MyResearch/RssFeedPreview',
+    'RssFeed/Full',
+    'Search3/Home',
+    'Search3/Results',
+    'Search3/FacetList',
+    'Search3/Versions'];
 $routeGenerator = new \TueFind\Route\RouteGenerator();
 $routeGenerator->addRecordRoutes($config, $recordRoutes);
 $routeGenerator->addDynamicRoutes($config, $dynamicRoutes);

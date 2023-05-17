@@ -9,24 +9,30 @@ $this->layout()->breadcrumbs = '<li><a href="' .  $this->url('myresearch-home') 
 <div class="<?=$this->layoutClass('mainbody')?>">
   <h2>Admins</h2>
   <p>Additional admins must be unlocked manually in the database by the development team.</p>
-
-  <table class="table">
-    <tr>
-      <th><?=$this->transEsc('Username')?></th>
-      <th><?=$this->transEsc('First Name')?></th>
-      <th><?=$this->transEsc('Last Name')?></th>
-      <th><?=$this->transEsc('Email Address')?></th>
-      <th><?=$this->transEsc('Rights')?></th>
-    </tr>
-    <?php foreach ($this->admins as $user): ?>
+  <hr />
+  <table class="table dataTable">
+    <thead>
       <tr>
-        <td><?=$user->username?></td>
-        <td><?=$user->firstname?></td>
-        <td><?=$user->lastname?></td>
-        <td><?=$user->email?></td>
-        <td><?=str_replace(',', '<br>', $user->tuefind_rights)?></td>
+        <th><?=$this->transEsc('Username')?></th>
+        <th><?=$this->transEsc('First Name')?></th>
+        <th><?=$this->transEsc('Last Name')?></th>
+        <th><?=$this->transEsc('Email Address')?></th>
+        <th><?=$this->transEsc('Institution')?></th>
+        <th><?=$this->transEsc('Rights')?></th>
       </tr>
-    <?php endforeach; ?>
+    </thead>
+    <tbody>
+      <?php foreach ($this->admins as $user): ?>
+        <tr>
+          <td><?=htmlspecialchars($user->username)?></td>
+          <td><?=htmlspecialchars($user->firstname)?></td>
+          <td><?=htmlspecialchars($user->lastname)?></td>
+          <td><?=htmlspecialchars($user->email)?></td>
+          <td><?=htmlspecialchars($user->tuefind_institution)?></td>
+          <td><?=str_replace(',', '<br>', htmlspecialchars($user->tuefind_rights))?></td>
+        </tr>
+      <?php endforeach; ?>
+    </tbody>
   </table>
 </div>
 

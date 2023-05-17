@@ -543,6 +543,33 @@ class TueFind extends \Laminas\View\Helper\AbstractHelper
         return $result;
     }
 
+    public function getUserAccessPublishButton(array $authorsIds): bool
+    {
+        $access = false;
+        $auth = $this->container->get('ViewHelperManager')->get('auth');
+        $manager = $auth->getManager();
+        $user = $manager->isLoggedIn();
+        if($user) {
+            $table = $this->container->get(\VuFind\Db\Table\PluginManager::class)->get('user_authority');
+            foreach($authorsIds as $authorityId) {
+                $row = $table->getByUserIdAndAuthorityId($user->id,$authorityId);
+                if(!empty($row) && $row->access_state == "granted") {
+                    $access = true;
+                }
+            }
+        }
+
+        return $access;
+    }
+
+    public function userAlreadyMadeAuthorityRequest($userId): bool
+    {
+        $table = $this->container->get(\VuFind\Db\Table\PluginManager::class)->get('user_authority');
+        $row = $table->getByUserIdCurrent($userId);
+        return (empty($row))? false: true;
+    }
+
+
     public function getUserAccessPublishRecord($userId, $recordAuthors): bool
     {
         $authorsIds = [];
@@ -559,4 +586,26 @@ class TueFind extends \Laminas\View\Helper\AbstractHelper
         $table = $this->container->get(\VuFind\Db\Table\PluginManager::class)->get('user_authority');
         return $table->hasGrantedAuthorityRight($userId, $authorsIds);
     }
+
+    public function showRSSBlock(): bool {
+        $instance = $this->getTueFindInstance();
+        $map = ['ixtheo'];
+        return in_array($instance, $map);
+    }
+
+    public function getFullRouteName(): string {
+        $currentRoute = $this->getRouteParams();
+        return isset($currentRoute['page']) ? $currentRoute['controller'].'/'.$currentRoute['action'].'/'.$currentRoute['page'] : $currentRoute['controller'].'/'.$currentRoute['action'];
+    }
+
+    public function getPublicationEmail(): string {
+        $config = $this->getConfig('tuefind');
+        return $config->Publication->email ?? "";
+    }
+
+    public function getSiteEmail(): string {
+        $config = $this->container->get('VuFind\Config')->get('config');
+        return $config->Site->email ?? "";
+    }
+
 }

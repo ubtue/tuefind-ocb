@@ -1,12 +1,25 @@
 <?php
 
 namespace IxTheo\Controller;
+
 use VuFind\Search\RecommendListener,
     VuFind\Exception\ListPermission as ListPermissionException;
 
 class MyResearchController extends \TueFind\Controller\MyResearchController
 {
-    function pdasubscriptionsAction() {
+    public function changeEmailAction() {
+        $view = parent::changeEmailAction();
+
+        $user = $this->getUser();
+
+        // Update the TAD access flag:
+        exec("/usr/local/bin/set_tad_access_flag.sh " . $user->id);
+
+        return $view;
+    }
+
+
+    public function pdasubscriptionsAction() {
 
         $user = $this->getUser();
         if ($user == false) {
@@ -75,7 +88,7 @@ class MyResearchController extends \TueFind\Controller\MyResearchController
         }
     }
 
-    function subscriptionsAction() {
+    public function subscriptionsAction() {
 
         $user = $this->getUser();
         if ($user == false) {
@@ -144,7 +157,7 @@ class MyResearchController extends \TueFind\Controller\MyResearchController
         }
     }
 
-    function performDeleteSubscription($id, $deleteSource) {
+    public function performDeleteSubscription($id, $deleteSource) {
         // Force login:
         $user = $this->getUser();
         if (!$user) {
@@ -161,7 +174,7 @@ class MyResearchController extends \TueFind\Controller\MyResearchController
         return true;
     }
 
-    function performDeletePDASubscription($id, $deleteSource) {
+    public function performDeletePDASubscription($id, $deleteSource) {
         // Force login:
         $user = $this->getUser();
         if (!$user) {
@@ -181,6 +194,15 @@ class MyResearchController extends \TueFind\Controller\MyResearchController
         return true;
     }
 
+    protected function getProfileParams()
+    {
+        $params = [
+            'ixtheo_title' => '', 'ixtheo_country' => '',
+            'ixtheo_language' => '', 'ixtheo_appellation' => ''
+        ];
+        return array_merge(parent::getProfileParams(), $params);
+    }
+
     public function profileAction()
     {
         $user = $this->getUser();
@@ -188,47 +210,9 @@ class MyResearchController extends \TueFind\Controller\MyResearchController
             return $this->forceLogin();
         }
 
-        if ($this->getRequest()->getPost("submit")) {
-            $this->updateProfile($this->getRequest(), $user);
-        }
-        $view = $this->createViewModel();
-        $view->user = $user;
-        $view->request = $this->mergePostDataWithUserData($this->getRequest()->getPost(), $user);
-        $config = $this->getConfig();
-        $view->accountDeletion = !empty($config->Authentication->account_deletion);
+        $view = parent::profileAction();
+        $view->request->ixtheo_language = $user->ixtheo_language ?: $this->layout()->userLang;
         return $view;
-    }
-
-    private function updateProfile(\Laminas\Http\PhpEnvironment\Request $request,
-                                   \VuFind\Db\Row\User $user)
-    {
-        $params = [
-            'firstname' => '', 'lastname' => '', 'email' => '',
-            'ixtheo_title' => '', 'ixtheo_institution' => '', 'ixtheo_country' => '',
-            'ixtheo_language' => '', 'ixtheo_appellation' => ''
-        ];
-        foreach ($params as $param => $default) {
-            $user->$param = $request->getPost()->get($param, $default);
-        }
-        $user->save();
-
-        // Update the TAD access flag:
-        exec("/usr/local/bin/set_tad_access_flag.sh " . $user->id);
-
-        $this->getAuthManager()->updateSession($user);
-    }
-
-    private function mergePostDataWithUserData($post, $user) {
-        $fields = ['email', 'username', 'ixtheo_appellation', 'ixtheo_title', 'firstname', 'lastname', 'ixtheo_institution', 'ixtheo_country'];
-        foreach ($fields as $field) {
-            if (!$post->$field) {
-                $post->$field = $user->$field;
-            }
-        }
-        if (!$post->ixtheo_language) {
-            $post->ixtheo_language = $user->ixtheo_language ?: $this->layout()->userLang;
-        }
-        return $post;
     }
 
     /**

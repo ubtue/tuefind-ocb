@@ -31,6 +31,7 @@ CREATE TABLE tuefind_rss_feeds (
     descriptions_and_substitutions VARCHAR(1000) DEFAULT NULL,
     strptime_format VARCHAR(50) DEFAULT NULL,
     downloader_time_limit INT NOT NULL DEFAULT 30,
+    active TINYINT(1) NOT NULL DEFAULT '1',
     CONSTRAINT id_constraint UNIQUE (id),
     CONSTRAINT feed_name_constraint UNIQUE (feed_name),
     CONSTRAINT feed_url_constraint UNIQUE (feed_url(768)),
@@ -79,12 +80,26 @@ CREATE TABLE tuefind_user_authorities (
     FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
 
-ALTER TABLE user ADD tuefind_subscribed_to_newsletter BOOL NOT NULL DEFAULT FALSE;
-CREATE INDEX tuefind_subscribed_to_newsletter_index ON user (tuefind_subscribed_to_newsletter);
+CREATE TABLE tuefind_user_authorities_history (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    authority_id VARCHAR(255) NOT NULL,
+    user_id INT NOT NULL,
+    admin_id INT NULL,
+    access_state ENUM('requested', 'granted', 'declined') NOT NULL,
+    request_user_date TIMESTAMP DEFAULT NOW() NOT NULL,
+    process_admin_date TIMESTAMP DEFAULT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (admin_id) REFERENCES user(id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES user(id) ON DELETE CASCADE
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin;
+
+ALTER TABLE vufind.user ADD tuefind_institution VARCHAR(255) DEFAULT NULL;
 
 ALTER TABLE user ADD tuefind_uuid CHAR(36) NOT NULL;
 ALTER TABLE user ADD CONSTRAINT tuefind_user_uuid UNIQUE (tuefind_uuid);
 CREATE TRIGGER before_user_insert BEFORE INSERT ON user FOR EACH ROW SET NEW.tuefind_uuid = UUID();
+
+ALTER TABLE user ADD tuefind_license_access_locked BOOLEAN DEFAULT FALSE AFTER tuefind_uuid;
 
 ALTER TABLE user ADD tuefind_rss_feed_send_emails BOOLEAN NOT NULL DEFAULT FALSE;
 CREATE INDEX tuefind_rss_feed_send_emails_index ON user (tuefind_rss_feed_send_emails);

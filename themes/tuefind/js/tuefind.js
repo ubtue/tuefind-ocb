@@ -12,7 +12,9 @@ var TueFind = {
                 if (href.match(/\/Content\//) || href.match(/\?subpage=/)) {
                     if (href.match(/[?&]lng=/)) {
                         // when switching the language, we want to keep the current anchor
-                        this.setAttribute('href', href + '#' + current_anchor);
+                        if(current_anchor != null) {
+                            this.setAttribute('href', href + '#' + current_anchor);
+                        }
                     } else {
                         this.setAttribute('href', href + '#content');
                     }
@@ -364,15 +366,18 @@ var TueFind = {
                                     replacement += label;
                                     filter[label] = 1;
                                 }
+                            $.event.trigger({ type: "JOP:success" });
                             }
                         } else if (state == 4 || state == 10) {
                             if (replacement == "") {
                                 replacement = '<a href="' + url_html + '" target="_blank"><i class="fa fa-external-link"></i> ' +
-                                              part_img + check_availability_text + '</a>';
+                                              part_img + check_availability_text + '</a>' +
+                                              '<br/>' +  TueFind.GetHBZInfo();
                                 // We get an 1x1 pixel gif from JOP that can be seen as an empty line
                                 // => remove it
                                 $("#" + jop_icons_id).remove();
                             }
+                            $.event.trigger({ type: "JOP:check_availability" });
                         }
                     });
                     if (replacement != "") {
@@ -396,6 +401,25 @@ var TueFind = {
             }
         }); // end ajax
     },
+
+
+    RemoveHBZLine: function() {
+        $('a[href^="http://openurlgw.hbz-nrw.de"]').closest('tr').remove();
+    },
+
+    GetHBZInfo: function() {
+        const info_parts = VuFind.translate('hbz_info_text').split('%HBZ%');
+        return info_parts[0]  + $('a[href^="http://openurlgw.hbz-nrw.de"]').closest('td').html() + info_parts[1];
+    },
+
+
+    // Remove HBZ line in full title view if JOP yielded sucessful results
+    // c.f. the triggered signal in GetJOPInformation()
+    RemoveHBZIfJOPPresent: function() {
+      $(document).on("JOP:success", function (event) { TueFind.RemoveHBZLine(); });
+      $(document).on("JOP:check_availability", function (event) { TueFind.RemoveHBZLine(); });
+    },
+
 
     // helper function to set focus on a specified input field, also sets cursor position to end of field content
     SetFocus: function(input_selector) {
@@ -520,6 +544,51 @@ var TueFind = {
             data: {action:actionType,id:rssID},
             dataType: "json"
         });
+    },
+
+    SetPositionClearButton: function () {
+        let clearSpan = $('.tf-clear-search-input-span');
+        let bodyWidth = $('body').width();
+        let searchFormObj = $('#searchForm_lookfor');
+        let searchInputWidth = searchFormObj.width();
+        let fixWidthClosed = clearSpan.data('x-position');
+        let fixWidthClosedLg = clearSpan.data('x-position-lg');
+        let fixWidthClosedMd = clearSpan.data('x-position-md');
+        let fixWidthClosedSm = clearSpan.data('x-position-sm');
+
+        if(fixWidthClosedLg !== undefined && bodyWidth < 1180 &&  bodyWidth > 975) {
+            fixWidthClosed = fixWidthClosedLg;
+        }
+        if(fixWidthClosedMd !== undefined && bodyWidth < 975 && bodyWidth > 500) {
+            fixWidthClosed = fixWidthClosedMd;
+        }
+        if(fixWidthClosedSm !== undefined && bodyWidth < 520) {
+            fixWidthClosed = fixWidthClosedSm;
+        }
+
+        let x = Math.round(searchInputWidth) + fixWidthClosed;
+        let visible = "none";
+        if(searchFormObj.val().length > 0) {
+            visible = "block";
+        }
+        if(clearSpan.hasClass("ixtheo2-form")) {
+            x = 0;
+        }
+        clearSpan.css({"left":x+"px","display":visible});
+
+    },
+
+    goToCollapseBlock: function(anchor,blockID) {
+        if(anchor.length) {
+            window.location.href = "#"+anchor;
+        }
+        if(blockID.length) {
+            let blockVar = $('#'+blockID);
+            if(!blockVar.hasClass('in')) {
+                blockVar.addClass('in');
+                blockVar.click();
+            }
+        }
     }
 };
 
@@ -555,6 +624,23 @@ $(document).ready(function () {
 
     $('.rssLabel').change(function(){
         TueFind.SwitchRSSFeedData($(this));
-    })
+    });
+
+    $('#searchForm_lookfor').change(function() {
+        TueFind.SetPositionClearButton();
+    });
+
+    TueFind.SetPositionClearButton();
+
+    $( window ).resize(function() {
+      TueFind.SetPositionClearButton();
+    });
+
+    $('.tf-clear-search-input-span').click(function(){
+        $('#searchForm_lookfor').val("");
+        $("#searchForm").submit();
+    });
+
+    $('.dataTable').DataTable();
 
 });

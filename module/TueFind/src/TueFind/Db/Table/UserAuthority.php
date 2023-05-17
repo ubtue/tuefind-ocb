@@ -20,7 +20,7 @@ class UserAuthority extends \VuFind\Db\Table\Gateway {
     public function getAll()
     {
         $select = $this->getSql()->select();
-        $select->join('user', 'tuefind_user_authorities.user_id = user.id', Select::SQL_STAR, SELECT::JOIN_LEFT);
+        $select->join('user', 'tuefind_user_authorities.user_id = user.id', Select::SQL_STAR, Select::JOIN_LEFT);
         $select->order('username ASC, authority_id ASC');
         return $this->selectWith($select);
     }
@@ -45,6 +45,11 @@ class UserAuthority extends \VuFind\Db\Table\Gateway {
             $whereParams['access_state'] = $accessState;
 
         return $this->select($whereParams);
+    }
+
+    public function getByUserIdCurrent($userId): ?UserAuthorityRow
+    {
+        return $this->select(['user_id' => $userId])->current();
     }
 
     public function getByAuthorityId($authorityId): ?UserAuthorityRow

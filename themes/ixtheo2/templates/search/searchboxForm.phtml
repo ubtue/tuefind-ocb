@@ -1,4 +1,6 @@
 <?php
+    $tuefind = $this->tuefind();
+    $ixtheo = $this->ixtheo();
     // Set default value if necessary:
     if (!isset($this->searchClassId)) {
         $config = $this->config()->get('config');
@@ -11,7 +13,16 @@
         $this->searchClassId, $this->searchIndex ?? null
     );
     $handlerCount = count($handlers);
+    $searchTypeSelected = array();
+    foreach ($handlers as $handler) {
+        if(!empty($handler['selected'])) {
+            $handler['label'] = $this->transEsc($handler['label']);
+            $searchTypeSelected = $handler;
+        }
+    }
+
     $basicSearch = $this->searchbox()->combinedHandlersActive() ? 'combined-searchbox' : $options->getSearchAction();
+
     $searchHome = $options->getSearchHomeAction();
     $advSearch = $options->getAdvancedSearchAction();
     $lastSort = $this->searchMemory()->getLastSort($this->searchClassId);
@@ -37,8 +48,14 @@
     }
     $filterDetails = $this->searchbox()->getFilterDetails($filterList, $checkboxFilters);
     $showFilters = $filterDetails && (isset($results) || $options->getRetainFilterSetting());
+
+    $tabConfig = $this->searchTabs()->getTabConfig($this->searchClassId, $this->lookfor, $this->searchIndex, $this->searchType, $hiddenFilters);
+
+    $tabConfig['tabs'] = $ixtheo->overrideSelectedSearchTab($tabConfig['tabs']);
+
+    $basicSearch = $ixtheo->changeSearchFormAction($basicSearch,$tabConfig['tabs']);
+
 ?>
-<?php $tabConfig = $this->searchTabs()->getTabConfig($this->searchClassId, $this->lookfor, $this->searchIndex, $this->searchType, $hiddenFilters); ?>
 
 <div class="clearfix searchbox_home" role="search">
     <?php if ($this->searchType == 'advanced'): ?>
@@ -70,7 +87,6 @@
         <form id="searchForm" class="searchForm ix2-searchForm tuefind-event-searchForm-on-submit ix-display-flex" method="get" action="<?=$this->url($basicSearch)?>" name="searchForm" autocomplete="off" >
             <?php $placeholder = $this->searchbox()->getPlaceholderText($tabConfig['selected']['id'] ?? null); ?>
 
-
             <!-- Begin search input field -->
             <input id="searchForm_lookfor"
                    class="searchForm_lookfor form-control search-query<?php if ($this->searchbox()->autocompleteEnabled($this->searchClassId)): ?> autocomplete searcher:<?= $this->escapeHtmlAttr($this->searchClassId) ?><?php endif ?>"
@@ -81,11 +97,23 @@
             <!-- Begin search select -->
             <?php if ($handlerCount > 1): ?>
                 <div class="dropdown form-control type-dropdown">
-                    <input id="searchForm_type" class="searchForm_type" type="hidden" name="type" value="AllFields">
-                    <a class="dropdown-toggle" href="#" aria-haspopup="true" aria-expaned="false" aria-label="<?=$this->transEsc("Search type")?>" data-toggle="dropdown">
-                        <span id="searchForm_typeCaption"><?=$this->transEsc('All fields')?></span>
-                        <b class="caret"></b>
-                    </a>
+
+                  <?php $subSystem = $tuefind->getTueFindSubsystem();?>
+                  <span class="tf-clear-search-input-span <?=$subSystem;?>-form" data-x-position="10"><svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"></path></svg></span>
+
+                    <?php if(empty($searchTypeSelected)):?>
+                      <input id="searchForm_type" class="searchForm_type" type="hidden" name="type" value="AllFields">
+                      <a class="dropdown-toggle" href="#" aria-haspopup="true" aria-expaned="false" aria-label="<?=$this->transEsc("Search type")?>" data-toggle="dropdown">
+                          <span id="searchForm_typeCaption"><?=$this->transEsc('All fields')?></span>
+                          <b class="caret"></b>
+                      </a>
+                    <?php else: ?>
+                        <input id="searchForm_type" class="searchForm_type" type="hidden" name="type" value="<?=$searchTypeSelected['value'];?>">
+                        <a class="dropdown-toggle" href="#" aria-haspopup="true" aria-expaned="false" aria-label="<?=$this->transEsc("Search type")?>" data-toggle="dropdown">
+                            <span id="searchForm_typeCaption"><?=$searchTypeSelected['label'];?></span>
+                            <b class="caret"></b>
+                        </a>
+                    <?php endif;?>
                     <ul class="dropdown-menu cw-mt-0" role="menu">
                         <?php foreach ($handlers as $handler): ?>
                             <li role="menuitem">
@@ -166,7 +194,7 @@
               ]
             );?>
         </form>
-        <?=$this->inlineScript(\Laminas\View\Helper\HeadScript::SCRIPT, '$(".searchForm_lookfor:visible").focus();', 'SET')?>
+        <?=$this->inlineScript(\Laminas\View\Helper\HeadScript::SCRIPT, '$(".searchForm_lookfor:visible").focus({focusVisible: true});', 'SET'); ?>
 
         <?php if ($advSearch): ?>
             <?=$this->context($this)->renderInContext('search/searchbox/pills.phtml', ['searchId' => $this->searchId,
