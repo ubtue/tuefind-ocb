@@ -6,7 +6,9 @@ class SolrMarc extends SolrDefault
 {
 
     protected function getKeibiReviews() {
-        return "Test Review";
+        if (isset($this->fields['keibi_reviews'])) {
+            return $this->fields['keibi_reviews'];
+        }
     }
 }
 
