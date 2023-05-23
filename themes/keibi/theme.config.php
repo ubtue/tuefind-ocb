@@ -5,4 +5,9 @@ return [
     'js' => [
         'relbib2.js',
     ],
+    'helpers' => [
+        'factories' => [
+            'TueFind\View\Helper\Root\RecordDataFormatter' => 'KeiBi\View\Helper\Root\RecordDataFormatterFactory'
+        ],
+    ]
 ];
