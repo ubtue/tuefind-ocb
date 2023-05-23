@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [ -z "$TUEFIND_FLAVOUR" ]; then
-    if [[ ( $# != 1 ) || ( $1 != "krimdok" && $1 != "ixtheo" ) ]]; then
+    if [[ ( $# != 1 ) || ( $1 != "krimdok" && $1 != "ixtheo"  && $1 != "keibi") ]]; then
         echo "Usage: $0 (krimdok | ixtheo)"
         exit 1
     else
