@@ -5,26 +5,6 @@
            rel="nofollow"><?= $this->transEsc("Advanced Search") ?></a>
     </li>
 
-    <li class="dropdown">
-        <a class="btn btn-light dropdown-toggle"
-                type="button"
-                id="dropdownMenuButton"
-                data-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false">
-            <?= $this->transEsc('Browse') ?>
-            <span class="caret"></span>
-        </a>
-
-        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-            <!-- added IxTheo/RelBib-specific keywordchainsearch -->
-            <li><a class="dropdown-item" href="<?= $this->url('keywordchainsearch-home') ?>"><?= $this->transEsc('Browse Keywordchains') ?></a></li>
-            <!-- RelBib: special display text -->
-            <li><a class="dropdown-item" href="<?= $this->url('browse-home') ?>"><?= $this->transEsc('Browse by Category') ?></a></li>
-            <li><a class="dropdown-item" href="<?= $this->url('alphabrowse-home') ?>"><?= $this->transEsc('Browse Alphabetically') ?></a></li>
-        </ul>
-    </li>
-
     <li>
         <a href="<?=$this->url('search-history')?>"
            class="btn btn-light" role="button"
@@ -36,33 +16,4 @@
            class="btn btn-light" role="button" data-lightbox=""
            rel="nofollow"><?= $this->transEsc('Search Tips') ?></a>
     </li>
-
-    <li>
-        <a href="<?=$this->url('search-newitem')?>"
-           class="btn btn-light" role="button"
-           rel="nofollow"><?=$this->transEsc('New Items')?></a>
-    </li>
-
-
-        <li class="dropdown pull-right">
-        <a class="btn btn-light dropdown-toggle"
-                type="button"
-                id="dropdownMenuButton"
-                data-toggle="dropdown"
-                aria-haspopup="true"
-                aria-expanded="false">
-            <?= $this->transEsc('Virtual Keyboard') ?>
-            <span class="caret"></span>
-        </a>
-
-        <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-            <li role="button" class="text-center virtual-keyboard-greek"><?=$this->transEsc('Greek')?></li>
-            <li role="button" class="text-center virtual-keyboard-hebrew"><?=$this->transEsc('Hebrew')?></li>
-            <li role="button" class="text-center virtual-keyboard-dari"><?=$this->transEsc('Dari')?></li>
-                <?php $virtualKeyboardSnippet = '$(triggerVirtualKeyboard(\'' . $this->transEsc("Accept") . ':' . $this->transEsc("Accept") . '\', \'' . $this->transEsc("Enter") . ':' . $this->transEsc("Enter") . '\'));'; ?>
-                <?=$this->inlineScript(\Laminas\View\Helper\HeadScript::SCRIPT, $virtualKeyboardSnippet, 'SET')?>
-        </ul>
-    </li>
-
-
 </ul>

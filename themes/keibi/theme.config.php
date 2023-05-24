@@ -7,7 +7,11 @@ return [
     ],
     'helpers' => [
         'factories' => [
-            'TueFind\View\Helper\Root\RecordDataFormatter' => 'KeiBi\View\Helper\Root\RecordDataFormatterFactory'
+            'TueFind\View\Helper\Root\RecordDataFormatter' => 'KeiBi\View\Helper\Root\RecordDataFormatterFactory',
+            'KeiBi\View\Helper\Root\Record' => 'VuFind\View\Helper\Root\RecordFactory'
         ],
+        'aliases' => [
+            'record' => 'KeiBi\View\Helper\Root\Record'
+        ]
     ]
 ];
