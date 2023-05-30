@@ -55,7 +55,7 @@
     }
 
     .searchbox {
-        background-color: rgba(255, 255, 255, 0.8);
+        background-color: rgba(255, 255, 255, 0.9);
         margin-top: 40px;
         padding: 0px 20px 15px 20px;
 
@@ -67,7 +67,7 @@
 }
 
 
-#rb-title-table {
+#ocb-title-table {
     display: flex;
 
     div {
@@ -79,15 +79,16 @@
     }
 }
 
-#rb-title-table-left {
+#ocb-title-table-left {
     display: flex;
     align-items: center;
     justify-content: center;
+    /*border-right: 2px solid black;*/
     border-right: 2px solid black;
     font-size: 400%;
 }
 
-#rb-title-table-right {
+#ocb-title-table-right {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -95,12 +96,13 @@
     line-height: 1.2;
 }
 
-#rb-logo-left {
-    color: #a51e37; /* intentionally brighter than @brand-primary */
+#ocb-logo-left {
+    font-family: "serif";
+    color: @brand-ternary
 }
 
-#rb-logo-right {
-    color: black;
+#ocb-logo-right {
+    color: @black
 }
 
 .panel-default, .panel-inverse, .panel-buttons {
