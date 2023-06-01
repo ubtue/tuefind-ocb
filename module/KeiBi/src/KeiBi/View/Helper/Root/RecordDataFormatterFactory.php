@@ -3,37 +3,14 @@
 namespace KeiBi\View\Helper\Root;
 
 use Interop\Container\ContainerInterface;
-use VuFind\View\Helper\Root\RecordDataFormatter\SpecBuilder;
+use KeiBi\View\Helper\Root\RecordDataFormatter\SpecBuilder;
 
 class RecordDataFormatterFactory extends \IxTheo\View\Helper\Root\RecordDataFormatterFactory {
 
-    /**
-     * User Account Capabilites Service
-     * @var \VuFind\Config\AccountCapabilities
-     */
-    protected $accountCapabilities;
-
-    /**
-     * Db Table Plugin Manager (e.g. to check user-specific rights)
-     * @var \VuFind\Db\Table\PluginManager
-     */
-    protected $dbTablePluginManager;
-
-    /**
-     * The logged in user, or null if not logged in
-     * @var \VuFind\Db\Row\User
-     */
-    protected $user;
-
-    protected $tuefind;
 
     public function __invoke(ContainerInterface $container, $requestedName,
         array $options = null
     ) {
-        $this->user = $container->get('ViewHelperManager')->get('auth')->getManager()->isLoggedIn();
-        $this->tuefind = $container->get('ViewHelperManager')->get('tuefind');
-        $this->dbTablePluginManager = $container->get('VuFind\Db\Table\PluginManager');
-        $this->accountCapabilities = $container->get(\VuFind\Config\AccountCapabilities::class);
         return parent::__invoke($container, $requestedName, $options);
     }
 
@@ -58,18 +35,6 @@ class RecordDataFormatterFactory extends \IxTheo\View\Helper\Root\RecordDataForm
         $this->addSubito($spec);
         $this->addHBZ($spec);
         $this->addJOP($spec);
-        // PDA (IxTheo-specific)
-        if ($this->accountCapabilities->getPdaSetting()) {
-            $spec->setTemplateLine(
-                'PDA', 'showPDA', 'data-PDA.phtml', ['rowId' => 'pda_row']
-            );
-        }
-        // TAD (IxTheo-specific)
-        if ($this->user != null && $this->dbTablePluginManager->get('user')->canUseTAD($this->user->id)) {
-            $spec->setTemplateLine(
-                'TAD', 'workIsTADCandidate', 'data-TAD.phtml'
-            );
-        }
         $this->addPublications($spec);
         $this->addContainerIdsAndTitles($spec);
 

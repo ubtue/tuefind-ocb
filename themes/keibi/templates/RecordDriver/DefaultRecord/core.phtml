@@ -1,0 +1,65 @@
+<?php $this->metadata()->generateMetatags($this->driver);?>
+<?php /* TueFind: Intentionally omit schema.org type "Product".
+       * For testing: https://search.google.com/test/rich-results
+       */ ?>
+<div class="media" vocab="http://schema.org/" resource="#record" typeof="<?=$this->driver->getSchemaOrgFormats()?>">
+  <?php
+    $QRCode = $this->record($this->driver)->getQRCode("core");
+    $coverDetails = $this->record($this->driver)->getCoverDetails('core', 'medium', $this->record($this->driver)->getThumbnail('large'));
+    $cover = $coverDetails['html'];
+    $preview = ($this->previewOverride ?? false)
+      ? $this->previewOverride : $this->record($this->driver)->getPreviews();
+  ?>
+
+  <?php /* TueFind: Intentionally removed the whole block for QRCode / Cover / Preview at this point */ ?>
+
+  <div class="media-body">
+
+    <?php /* KeiBi: Make sure we interpret HTML in the title */ ?>
+    <!-- <h3 property="name"><?=$this->escapeHtml($this->driver->getTitle())?></h3> -->
+    <h3 property="name"><?=$this->driver->getTitle()?></h3>
+
+    <?php if(!empty($this->extraControls)): ?>
+      <?=$this->extraControls['actionControls'] ?? ''?>
+      <?=$this->extraControls['availabilityInfo'] ?? ''?>
+    <?php endif; ?>
+
+    <?php $summary = $this->driver->getSummary(); $summary = isset($summary[0]) ? $this->escapeHtml($summary[0]) : false; ?>
+    <?php if ($summary): ?>
+      <p><?=$this->truncate($summary, 300)?></p>
+
+      <?php if(strlen($summary) > 300): ?>
+        <p><a href='<?=$this->recordLinker()->getTabUrl($this->driver, 'Description')?>#tabnav'><?=$this->transEsc('Full description')?></a></p>
+      <?php endif; ?>
+    <?php endif; ?>
+
+    <?php if ($this->userlist()->getMode() !== 'disabled'): ?>
+      <?php /* Display the lists that this record is saved to */ ?>
+      <div class="savedLists">
+        <strong><?=$this->transEsc("Saved in")?>:</strong>
+        <a href="<?=$this->url('myresearch-favorites')?>" data-lightbox class="tf-favoritesListModal tf-d-none">&nbsp;</a>
+      </div>
+    <?php endif; ?>
+
+    <?php /* Display Main Details */ ?>
+    <?php
+      $formatter = $this->recordDataFormatter();
+      $coreFields = $formatter->getData($driver, $formatter->getDefaults('core'));
+    ?>
+    <?php if (!empty($coreFields)): ?>
+      <table class="table table-striped">
+        <!-- TueFind: different column widths -->
+        <colgroup>
+          <col width="2*">
+          <col width="5*">
+        </colgroup>
+        <caption class="sr-only"><?=$this->transEsc('Bibliographic Details')?></caption>
+        <?php foreach ($coreFields as $current): ?>
+          <?php /* TueFind: possibility to add rowId, e.g. for PDA */ ?>
+          <tr<?=(isset($current['options']['rowId'])) ? ' id="'.$current['options']['rowId'].'"' : ''?>><th><?=$this->transEsc($current['label'])?>:</th><td><?=$current['value']?></td></tr>
+        <?php endforeach; ?>
+      </table>
+    <?php endif; ?>
+    <?php /* End Main Details */ ?>
+  </div>
+</div>
