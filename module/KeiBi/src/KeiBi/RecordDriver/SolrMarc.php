@@ -10,5 +10,13 @@ class SolrMarc extends SolrDefault
             return $this->fields['keibi_reviews'];
         }
     }
+
+
+    public function showKeibiContainerTitles()
+    {
+        return (!empty($this->getKeibiContainerTitles())
+                || $this->getIssue() || $this->getPages()
+                || $this->getVolume() || $this->getYear());
+    }
 }
 

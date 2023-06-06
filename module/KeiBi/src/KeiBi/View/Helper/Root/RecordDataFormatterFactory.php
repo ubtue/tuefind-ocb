@@ -14,6 +14,13 @@ class RecordDataFormatterFactory extends \IxTheo\View\Helper\Root\RecordDataForm
         return parent::__invoke($container, $requestedName, $options);
     }
 
+
+    protected function addKeibiContainerTitles(&$spec) {
+         $spec->setTemplateLine(
+            'In', 'showKeibiContainerTitles', 'data-keibi-container-titles.phtml'
+        );
+    }
+
     /**
      * Get default specifications for displaying data in core metadata.
      *
@@ -36,7 +43,8 @@ class RecordDataFormatterFactory extends \IxTheo\View\Helper\Root\RecordDataForm
         $this->addHBZ($spec);
         $this->addJOP($spec);
         $this->addPublications($spec);
-        $this->addContainerIdsAndTitles($spec);
+        //$this->addContainerIdsAndTitles($spec);
+        $this->addKeibiContainerTitles($spec);
 
         $spec->setTemplateLine('all_reviews', 'getKeibiReviews', 'data-keibiReviews.phtml');
 
