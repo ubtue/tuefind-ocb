@@ -40,7 +40,7 @@ class RecordDataFormatterFactory extends \IxTheo\View\Helper\Root\RecordDataForm
         $this->addFormats($spec);
         $this->addLanguages($spec);
         $this->addSubito($spec);
-        $this->addHBZ($spec);
+        //$this->addHBZ($spec);
         $this->addJOP($spec);
         $this->addPublications($spec);
         //$this->addContainerIdsAndTitles($spec);
