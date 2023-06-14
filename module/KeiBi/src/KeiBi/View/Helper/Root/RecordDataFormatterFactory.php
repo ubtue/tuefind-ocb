@@ -39,9 +39,9 @@ class RecordDataFormatterFactory extends \IxTheo\View\Helper\Root\RecordDataForm
         $this->addDeduplicatedAuthors($spec);
         $this->addFormats($spec);
         $this->addLanguages($spec);
-        $this->addSubito($spec);
+        //$this->addSubito($spec);
         //$this->addHBZ($spec);
-        $this->addJOP($spec);
+        //$this->addJOP($spec);
         $this->addPublications($spec);
         //$this->addContainerIdsAndTitles($spec);
         $this->addKeibiContainerTitles($spec);
