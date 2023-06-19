@@ -101,32 +101,3 @@ forms:
         required: true
         settings:
         # help: Feedback_Disclaimer
-
-  # Example for an acquisition request form
-
-  AcquisitionRequest:
-    enabled: true
-    title: Acquisition Request
-    onlyForLoggedUsers: false
-    emailSubject: Acquisition Request
-    title: Acquisition Request,
-    response: Thank you for suggesting a title.
-    senderInfoRequired: true
-
-    #recipient:
-    #  name: Your Library
-    #  email: feedback@myuniversity.edu
-
-    help:
-      pre: acquisition_request_description_relbib
-      #post: acquisition_request_info_post
-
-    fields:
-      - name: title
-        type: text
-        label: Title Request
-        required: true
-
-      - name: message
-        type: textarea
-        label: Comments
