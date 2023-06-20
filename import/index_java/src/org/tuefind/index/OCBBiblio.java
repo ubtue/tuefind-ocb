@@ -37,7 +37,7 @@ public class OCBBiblio extends TueFindBiblio {
         }
         if (!years.isEmpty())
             return years;
-        
+
 
         // Use the sort date given in the 008-Field
         final ControlField _008_field = (ControlField) record.getVariableField("008");
@@ -67,6 +67,34 @@ public class OCBBiblio extends TueFindBiblio {
             return "";
 
         return calculateLastPublicationYear(years);
+    }
+
+
+    // This must match the MARC-Fields specified in the map_file.txt for the database conversion tool
+    public String getKeibiVolumeAndIndex(final Record record) {
+         final StringBuilder volumeAndIndex = new StringBuilder();
+         final List<VariableField> _KEIFields = record.getVariableFields("KEI");
+
+         String keibi_volume = "";
+         DataField _VOLField = (DataField)record.getVariableField("VOL");
+
+         Subfield _VOLSubfieldA = _VOLField.getSubfield('a');
+         if (_VOLSubfieldA != null)
+             keibi_volume = _VOLSubfieldA.getData();
+
+
+         String keibi_index = "";
+         for (final VariableField _KEIField : _KEIFields) {
+             final DataField dataField = (DataField) _KEIField;
+             Subfield _KEIsubfieldB =  dataField.getSubfield('b');
+                 if (_KEIsubfieldB != null)
+                 keibi_index = _KEIsubfieldB.getData();
+         }
+
+         if (!keibi_volume.isEmpty() && !keibi_index.isEmpty())
+            return volumeAndIndex.append(keibi_volume).append(":").append(keibi_index).toString();
+
+         return "Unknown";
     }
 }
 

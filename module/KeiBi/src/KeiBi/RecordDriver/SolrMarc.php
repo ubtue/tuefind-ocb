@@ -6,9 +6,7 @@ class SolrMarc extends SolrDefault
 {
 
     protected function getKeibiReviews() {
-        if (isset($this->fields['keibi_reviews'])) {
-            return $this->fields['keibi_reviews'];
-        }
+        return isset($this->fields['keibi_reviews']) ? $this->fields['keibi_reviews'] : [];
     }
 
 
@@ -17,6 +15,12 @@ class SolrMarc extends SolrDefault
         return (!empty($this->getKeibiContainerTitles())
                 || $this->getIssue() || $this->getPages()
                 || $this->getVolume() || $this->getYear());
+    }
+
+
+    public function getKeibiVolumeAndIndex() {
+        return isset($this->fields['keibi_volume_and_index']) ?
+                     $this->fields['keibi_volume_and_index'] : [];
     }
 }
 

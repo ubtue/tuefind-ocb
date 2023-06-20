@@ -21,6 +21,10 @@ class RecordDataFormatterFactory extends \IxTheo\View\Helper\Root\RecordDataForm
         );
     }
 
+    protected function addKeibiVolumeAndIndex(&$spec) {
+         $spec->setLine('Keibi Volume And Index', 'getKeibiVolumeAndIndex', null);
+    }
+
     /**
      * Get default specifications for displaying data in core metadata.
      *
@@ -45,7 +49,7 @@ class RecordDataFormatterFactory extends \IxTheo\View\Helper\Root\RecordDataForm
         $this->addPublications($spec);
         //$this->addContainerIdsAndTitles($spec);
         $this->addKeibiContainerTitles($spec);
-
+        $this->addKeibiVolumeAndIndex($spec);
         $spec->setTemplateLine('all_reviews', 'getKeibiReviews', 'data-keibiReviews.phtml');
 
         $this->addVolumesAndArticles($spec);
