@@ -21,6 +21,12 @@ class RecordDataFormatterFactory extends \IxTheo\View\Helper\Root\RecordDataForm
         );
     }
 
+    protected function addKeibiPublicationDetails(&$spec) {
+         $spec->setTemplateLine(
+            'Published', 'showKeibiPublicationDetails', 'data-keibi-publicationDetails.phtml'
+        );
+    }
+
     protected function addKeibiVolumeAndIndex(&$spec) {
          $spec->setLine('Keibi Volume And Index', 'getKeibiVolumeAndIndex', null);
     }
@@ -49,6 +55,7 @@ class RecordDataFormatterFactory extends \IxTheo\View\Helper\Root\RecordDataForm
         $this->addPublications($spec);
         //$this->addContainerIdsAndTitles($spec);
         $this->addKeibiContainerTitles($spec);
+        $this->addKeibiPublicationDetails($spec);
         $this->addKeibiVolumeAndIndex($spec);
         $spec->setTemplateLine('all_reviews', 'getKeibiReviews', 'data-keibiReviews.phtml');
 
