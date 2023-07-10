@@ -31,6 +31,13 @@ class RecordDataFormatterFactory extends \IxTheo\View\Helper\Root\RecordDataForm
          $spec->setLine('Keibi Volume And Index', 'getKeibiVolumeAndIndex', null);
     }
 
+
+     protected function addKeibiInferiorLinks(&$spec) {
+        $spec->setTemplateLine(
+            'Volumes / Articles', 'IsSuperiorWork', 'data-volumes_articles.phtml'
+        );
+    }
+
     /**
      * Get default specifications for displaying data in core metadata.
      *
@@ -39,7 +46,7 @@ class RecordDataFormatterFactory extends \IxTheo\View\Helper\Root\RecordDataForm
     public function getDefaultCoreSpecs()
     {
         $spec = new SpecBuilder();
-        $this->addPublishedIn($spec);
+        //$this->addPublishedIn($spec);
         $this->addFollowingTitle($spec); // TueFind specific
         $this->addPrecedingTitle($spec);  // TueFind specific
         // Other Titles (IxTheo-specific)
@@ -59,7 +66,8 @@ class RecordDataFormatterFactory extends \IxTheo\View\Helper\Root\RecordDataForm
         $this->addKeibiVolumeAndIndex($spec);
         $spec->setTemplateLine('all_reviews', 'getKeibiReviews', 'data-keibiReviews.phtml');
 
-        $this->addVolumesAndArticles($spec);
+        //$this->addVolumesAndArticles($spec);
+        $this->addKeibiInferiorLinks($spec);
         $this->addEdition($spec);
         $this->addSeries($spec);
         // Standardized Subjects (IxTheo-specific)

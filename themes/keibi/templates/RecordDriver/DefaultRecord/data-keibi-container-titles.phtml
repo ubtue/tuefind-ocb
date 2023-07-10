@@ -7,19 +7,32 @@
 <?php if (!empty($volume)) { $infos[] = $this->transEsc('Volume') . ': ' . $this->escapeHtml($volume); }?>
 <?php if (!empty($issue)) { $infos[] = $this->transEsc('Issue') . ': ' . $this->escapeHtml($issue); }?>
 <?php if (!empty($pages)) { $infos[] = $this->transEsc('Pages') . ': ' . $this->escapeHtml($pages); }?>
-<?php $titles = $this->driver->getKeibiContainerTitles();?>
-<?php if (sizeof($titles)): ?>
-  <?php $_773a_title = $this->driver->getSuperiorFrom773a() ? $this->driver->getSuperiorFrom773a()[0] : '';?>
-  <?php foreach ($titles as $title): ?>
-      <?php if ((!empty($_773a_title)) && ($_773a_title !== $title)):?>
-            <?php echo($_773a_title . '<br/>' . $this->escapeHtml($title))?>
-      <?php else:?>
-          <?php echo($this->escapeHtml($title))?>
-      <?php endif;?>
-      <br/>
+<?php $ids_and_titles = $this->driver->getContainerIDsAndTitles();?>
+<?php if (sizeof($ids_and_titles)): ?>
+  <?php foreach ($ids_and_titles as $id => $title): ?>
+    <a href="<?=$this->url("record", array("id" => $id));?>">
+      <?=$this->escapeHtml($title[0])?>
+      <?php if (!empty($title[1])): ?>
+        (<?=$title[1]?>)
+      <?php endif; ?>
+    </a>
+    <br/>
   <?php endforeach; ?>
-<?php elseif (!empty($this->driver->getSuperiorFrom773a())): ?>
-  <?=$this->driver->getSuperiorFrom773a()[0];?>
-  <br/>
-<?php endif; ?>
+<?php else:?>
+  <?php $titles = $this->driver->getKeibiContainerTitles();?>
+  <?php if (sizeof($titles)): ?>
+    <?php $_773a_title = $this->driver->getSuperiorFrom773a() ? $this->driver->getSuperiorFrom773a()[0] : '';?>
+    <?php foreach ($titles as $title): ?>
+        <?php if ((!empty($_773a_title)) && ($_773a_title !== $title)):?>
+              <?php echo($_773a_title . '<br/>' . $this->escapeHtml($title))?>
+        <?php else:?>
+            <?php echo($this->escapeHtml($title))?>
+        <?php endif;?>
+        <br/>
+    <?php endforeach; ?>
+  <?php elseif (!empty($this->driver->getSuperiorFrom773a())): ?>
+    <?=$this->driver->getSuperiorFrom773a()[0];?>
+    <br/>
+  <?php endif; ?>
+<?php endif;?>
 <?=implode(', ', $infos);?>
