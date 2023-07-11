@@ -13,8 +13,8 @@ class SolrMarc extends SolrDefault
 
     public function showKeibiContainerTitles()
     {
-        if (in_array("Book", $this->getFormats()))
-            return false;
+        /*if (in_array("Book", $this->getFormats()))
+            return false;*/
 
         return (!empty($this->getKeibiContainerTitles())
                 || $this->getIssue() || $this->getPages()
